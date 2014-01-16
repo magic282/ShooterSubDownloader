@@ -8,6 +8,9 @@ using System.Threading.Tasks;
 
 namespace WindowsFormsApplication1
 {
+    /// <summary>
+    /// https://docs.google.com/document/d/1w5MCBO61rKQ6hI5m9laJLWse__yTYdRugpVyz4RzrmM/preview
+    /// </summary>
     class SVPlayerHash
     {
         public static string ComputeFileHash(FileInfo fileInfo)

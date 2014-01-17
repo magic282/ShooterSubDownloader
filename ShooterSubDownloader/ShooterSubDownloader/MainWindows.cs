@@ -50,13 +50,20 @@ namespace WindowsFormsApplication1
                 {
                     foreach (string item in Directory.GetFiles(s))
                     {
-                        fileNames.Add(Path.GetFileName(item));
+                        if (!fileNames.Contains(item))
+                        {
+                            fileNames.Add(item);
+                        }
                     }
 
                 }
                 else
                 {
-                    fileNames.Add(s);
+                    if (!fileNames.Contains(s))
+                    {
+                        fileNames.Add(s);
+                    }
+
                 }
 
             }
@@ -89,7 +96,7 @@ namespace WindowsFormsApplication1
             listBox1.Items.Clear();
             foreach (string s in fileNames)
             {
-                listBox1.Items.Add(s);
+                listBox1.Items.Add(Path.GetFileName(s));
             }
 
             // scroll to bottom

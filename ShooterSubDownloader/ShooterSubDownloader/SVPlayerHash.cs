@@ -51,6 +51,7 @@ namespace WindowsFormsApplication1
                 }
                 ret += sBuilder.ToString();
             }
+            fs.Close();
             
             return ret;
         }

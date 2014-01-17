@@ -123,7 +123,7 @@ namespace WindowsFormsApplication1
             }
             foreach (string s in fileNames)
             {
-                Shooter shooter = new Shooter(new FileInfo(s));
+                Shooter shooter = new Shooter(new FileInfo(s),checkBox1.Checked);
             }
         }
 

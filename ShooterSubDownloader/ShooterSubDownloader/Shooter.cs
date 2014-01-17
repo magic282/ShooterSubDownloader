@@ -7,9 +7,8 @@ using System.Net;
 using System.Net.NetworkInformation;
 using System.Runtime.Serialization;
 using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 using System.Diagnostics;
+using System.Threading;
 
 namespace WindowsFormsApplication1
 {
@@ -39,7 +38,7 @@ namespace WindowsFormsApplication1
             public Fileinfo[] Files { get; set; }
         }
 
-        private const string url = "https://www.shooter.cn/api/subapi.php";
+        private const string url = "http://shooter.cn/api/subapi.php";
         internal enum language
         {
             Chn,
@@ -60,6 +59,11 @@ namespace WindowsFormsApplication1
         private string hashValue;
         private Subinfo[] subinfoChn;
         private Subinfo[] subinfoEng;
+
+        public string FileName
+        {
+            get { return videoFile.FullName; }
+        }
         public Shooter(FileInfo fileInfo, bool enableEngSub)
         {
             this.videoFile = fileInfo;
@@ -74,8 +78,10 @@ namespace WindowsFormsApplication1
         public void startDownload()
         {
             Console.WriteLine("startDownload called.");
+            Console.WriteLine("Working for {0}", Path.GetFileNameWithoutExtension(videoFile.FullName));
             getSubInfoFromShooter();
             Down();
+            Console.WriteLine("startDownload finish.");
         }
 
         internal returnStatus Status
@@ -88,62 +94,107 @@ namespace WindowsFormsApplication1
         {
             int count = 0;
             Console.WriteLine("starting download...");
-            try
+
+            int expectCnt = 0;
+            if (subinfoChn != null)
             {
-                #region Download Chinese subtitles
-                if (subinfoChn != null)
+                foreach (Subinfo sub in subinfoChn)
                 {
-
-                    WebClient client = new WebClient();
-                    string dir = videoFile.DirectoryName;
-                    string subFileNameBase = Path.GetFileNameWithoutExtension(videoFile.FullName);
-                    Console.WriteLine("Get {0} subs returned.", subinfoChn.Length);
-                    for (int i = 0; i < subinfoChn.Length; ++i)
-                    {
-                        Console.WriteLine("Downloading {0} file", i);
-                        for (int j = 0; j < subinfoChn[i].Files.Length; ++j)
-                        {
-                            Console.WriteLine(subinfoChn[i].Files[j].Ext);
-                            Console.WriteLine(subinfoChn[i].Files[j].Link);
-                            string subFileName = subFileNameBase +
-                                ".chn" + (i == 0 ? "" : string.Format("{0}", i)) +
-                                "." + subinfoChn[i].Files[j].Ext;
-                            client.DownloadFile(new Uri(subinfoChn[i].Files[j].Link),
-                                dir + Path.DirectorySeparatorChar + subFileName);
-                        }
-                    }
-                } 
-                #endregion
-
-                #region Download English subtitles
-                if (enableEngSub && subinfoEng != null)
-                {
-                    WebClient client = new WebClient();
-                    string dir = videoFile.DirectoryName;
-                    string subFileNameBase = Path.GetFileNameWithoutExtension(videoFile.FullName);
-                    Console.WriteLine("Get {0} subs returned.", subinfoEng.Length);
-                    for (int i = 0; i < subinfoEng.Length; ++i)
-                    {
-                        Console.WriteLine("Downloading {0} file", i);
-                        for (int j = 0; j < subinfoEng[i].Files.Length; ++j)
-                        {
-                            Console.WriteLine(subinfoEng[i].Files[j].Ext);
-                            Console.WriteLine(subinfoEng[i].Files[j].Link);
-                            string subFileName = subFileNameBase +
-                                ".eng" + (i == 0 ? "" : string.Format("{0}", i)) +
-                                "." + subinfoEng[i].Files[j].Ext;
-                            client.DownloadFile(new Uri(subinfoEng[i].Files[j].Link),
-                                dir + Path.DirectorySeparatorChar + subFileName);
-                        }
-                    }
-                } 
-                #endregion
+                    expectCnt += sub.Files.Length;
+                }
             }
-            catch
+            if (enableEngSub && subinfoEng != null)
             {
-                status = returnStatus.DownloadFailed;
+                foreach (Subinfo sub in subinfoEng)
+                {
+                    expectCnt += sub.Files.Length;
+                }
+            }
+
+            if (expectCnt <= 0)
+            {
+                status = returnStatus.NoSubtitle;
                 return;
             }
+
+            #region Download Chinese subtitles
+            if (subinfoChn != null)
+            {
+
+                WebClient client = new WebClient();
+                string dir = videoFile.DirectoryName;
+                string subFileNameBase = Path.GetFileNameWithoutExtension(videoFile.FullName);
+                Console.WriteLine("Get {0} subs returned.", subinfoChn.Length);
+                for (int i = 0; i < subinfoChn.Length; ++i)
+                {
+                    Console.WriteLine("Downloading {0} file", i);
+                    for (int j = 0; j < subinfoChn[i].Files.Length; ++j)
+                    {
+                        Console.WriteLine(subinfoChn[i].Files[j].Ext);
+                        Console.WriteLine(subinfoChn[i].Files[j].Link);
+                        string subFileName = subFileNameBase +
+                            ".chn" + (i == 0 ? "" : string.Format("{0}", i)) +
+                            "." + subinfoChn[i].Files[j].Ext;
+
+                        try
+                        {
+                            client.DownloadFile(new Uri(subinfoChn[i].Files[j].Link),
+                                                dir + Path.DirectorySeparatorChar + subFileName);
+                            ++count;
+                        }
+                        catch (Exception e)
+                        {
+                            Console.WriteLine("Caught exception while downloading.");
+                            Console.WriteLine(e.GetType().ToString());
+                            Console.WriteLine(e.Message);
+                            Console.WriteLine(e.StackTrace);
+                            //status = returnStatus.DownloadFailed;
+                            return;
+                        }
+                    }
+                }
+            }
+            #endregion
+
+            #region Download English subtitles
+            if (enableEngSub && subinfoEng != null)
+            {
+                WebClient client = new WebClient();
+                string dir = videoFile.DirectoryName;
+                string subFileNameBase = Path.GetFileNameWithoutExtension(videoFile.FullName);
+                Console.WriteLine("Get {0} subs returned.", subinfoEng.Length);
+                for (int i = 0; i < subinfoEng.Length; ++i)
+                {
+                    Console.WriteLine("Downloading {0} file", i);
+                    for (int j = 0; j < subinfoEng[i].Files.Length; ++j)
+                    {
+                        Console.WriteLine(subinfoEng[i].Files[j].Ext);
+                        Console.WriteLine(subinfoEng[i].Files[j].Link);
+                        string subFileName = subFileNameBase +
+                            ".eng" + (i == 0 ? "" : string.Format("{0}", i)) +
+                            "." + subinfoEng[i].Files[j].Ext;
+
+                        try
+                        {
+                            client.DownloadFile(new Uri(subinfoEng[i].Files[j].Link),
+                                              dir + Path.DirectorySeparatorChar + subFileName);
+                            ++count;
+                        }
+                        catch (Exception e)
+                        {
+                            Console.WriteLine("Caught exception while downloading.");
+                            Console.WriteLine(e.GetType().ToString());
+                            Console.WriteLine(e.Message);
+                            Console.WriteLine(e.StackTrace);
+                            //status = returnStatus.DownloadFailed;
+                            return;
+                        }
+                    }
+                }
+            }
+            #endregion
+
+
 
             if (count > 0)
             {
@@ -151,7 +202,7 @@ namespace WindowsFormsApplication1
             }
             else
             {
-                status = returnStatus.NoSubtitle;
+                status = returnStatus.DownloadFailed;
             }
             Console.WriteLine("download finished.");
 
@@ -166,6 +217,7 @@ namespace WindowsFormsApplication1
         /// <param name="downEngSub"></param>
         private void getSubInfoFromShooter()
         {
+            Console.WriteLine("Start getSubInfoFromShooter...");
             #region download Chinese subInfo
             using (var wb = new WebClient())
             {
@@ -188,15 +240,15 @@ namespace WindowsFormsApplication1
                 subinfoChn = JsonHelper.FromJson<Subinfo[]>(retString);
 
                 #region result debug output
-                //foreach (Subinfo sub in subinfoChn)
-                //{
-                //    Console.WriteLine(sub.Desc);
-                //    foreach (Fileinfo file in sub.Files)
-                //    {
-                //        Console.WriteLine(file.Ext);
-                //        Console.WriteLine(file.Link);
-                //    }
-                //}
+                foreach (Subinfo sub in subinfoChn)
+                {
+                    Console.WriteLine(sub.Desc);
+                    foreach (Fileinfo file in sub.Files)
+                    {
+                        Console.WriteLine(file.Ext);
+                        Console.WriteLine(file.Link);
+                    }
+                }
                 #endregion
             }
             #endregion
@@ -240,19 +292,19 @@ namespace WindowsFormsApplication1
                 }
             }
             #endregion
-
+            Console.WriteLine("getSubInfoFromShooter finished.");
         }
 
         public static bool canConnect()
         {
-            Uri url = new Uri("https://www.shooter.cn/");
+            Uri url = new Uri("http://shooter.cn/");
             string pingurl = string.Format("{0}", url.Host);
             string host = pingurl;
             bool result = false;
             Ping p = new Ping();
             try
             {
-                PingReply reply = p.Send(host, 3000);
+                PingReply reply = p.Send(host, 6000);
                 if (reply.Status == IPStatus.Success)
                     return true;
             }

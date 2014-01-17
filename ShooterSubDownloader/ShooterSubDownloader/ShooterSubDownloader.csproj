@@ -13,7 +13,7 @@
     <FileAlignment>512</FileAlignment>
     <IsWebBootstrapper>false</IsWebBootstrapper>
     <TargetFrameworkProfile />
-    <PublishUrl>publish\</PublishUrl>
+    <PublishUrl>ShooterSubDownloader\</PublishUrl>
     <Install>true</Install>
     <InstallFrom>Disk</InstallFrom>
     <UpdateEnabled>false</UpdateEnabled>
@@ -27,7 +27,7 @@
     <TargetCulture>zh-CN</TargetCulture>
     <ProductName>ShooterSubDownloader</ProductName>
     <PublisherName>magic282</PublisherName>
-    <ApplicationRevision>2</ApplicationRevision>
+    <ApplicationRevision>4</ApplicationRevision>
     <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
     <UseApplicationTrust>false</UseApplicationTrust>
     <PublishWizardCompleted>true</PublishWizardCompleted>

@@ -125,6 +125,7 @@ namespace WindowsFormsApplication1
             {
                 Shooter shooter = new Shooter(new FileInfo(s),checkBox1.Checked);
             }
+            listBox1.Items[0].ToString();
         }
 
         private void button2_Click(object sender, EventArgs e)

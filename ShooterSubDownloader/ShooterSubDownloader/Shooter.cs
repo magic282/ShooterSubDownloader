@@ -67,8 +67,13 @@ namespace WindowsFormsApplication1
             this.status = returnStatus.Unknown;
             this.hashValue = SVPlayerHash.ComputeFileHash(fileInfo);
 
-            Thread t = new Thread(action);
-            t.Start();
+            //Thread t = new Thread(action);
+            //t.Start();
+        }
+
+        public void startDownload()
+        {
+            Down();
         }
 
         internal returnStatus Status
@@ -77,11 +82,12 @@ namespace WindowsFormsApplication1
             set { status = value; }
         }
 
-        public void Down()
+        private void Down()
         {
             int count = 0;
             try
             {
+                #region Download Chinese subtitles
                 if (subinfoChn != null)
                 {
 
@@ -103,8 +109,10 @@ namespace WindowsFormsApplication1
                                 dir + Path.DirectorySeparatorChar + subFileName);
                         }
                     }
-                }
+                } 
+                #endregion
 
+                #region Download English subtitles
                 if (enableEngSub && subinfoEng != null)
                 {
                     WebClient client = new WebClient();
@@ -125,7 +133,8 @@ namespace WindowsFormsApplication1
                                 dir + Path.DirectorySeparatorChar + subFileName);
                         }
                     }
-                }
+                } 
+                #endregion
             }
             catch
             {
@@ -228,7 +237,6 @@ namespace WindowsFormsApplication1
             }
             #endregion
 
-            Down();
         }
 
         public static bool canConnect()

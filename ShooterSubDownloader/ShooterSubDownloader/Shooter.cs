@@ -73,6 +73,8 @@ namespace WindowsFormsApplication1
 
         public void startDownload()
         {
+            Console.WriteLine("startDownload called.");
+            getSubInfoFromShooter();
             Down();
         }
 
@@ -85,6 +87,7 @@ namespace WindowsFormsApplication1
         private void Down()
         {
             int count = 0;
+            Console.WriteLine("starting download...");
             try
             {
                 #region Download Chinese subtitles
@@ -150,6 +153,7 @@ namespace WindowsFormsApplication1
             {
                 status = returnStatus.NoSubtitle;
             }
+            Console.WriteLine("download finished.");
 
         }
 
@@ -160,7 +164,7 @@ namespace WindowsFormsApplication1
         /// <param name="hashValue"></param>
         /// <param name="fileInfo"></param>
         /// <param name="downEngSub"></param>
-        private void action()
+        private void getSubInfoFromShooter()
         {
             #region download Chinese subInfo
             using (var wb = new WebClient())

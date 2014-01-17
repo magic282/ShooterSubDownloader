@@ -6,6 +6,7 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -39,6 +40,17 @@ namespace WindowsFormsApplication1
 
         private List<string> fileNames;
 
+        private bool isVideoByExtension(string file)
+        {
+            foreach (string s in suffix)
+            {
+                if (s == Path.GetExtension(file).ToLower())
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
 
         private void storeFileName(string[] FNs)
         {
@@ -50,7 +62,7 @@ namespace WindowsFormsApplication1
                 {
                     foreach (string item in Directory.GetFiles(s))
                     {
-                        if (!fileNames.Contains(item))
+                        if (!fileNames.Contains(item) && isVideoByExtension(item))
                         {
                             fileNames.Add(item);
                         }
@@ -59,7 +71,7 @@ namespace WindowsFormsApplication1
                 }
                 else
                 {
-                    if (!fileNames.Contains(s))
+                    if (!fileNames.Contains(s) && isVideoByExtension(s))
                     {
                         fileNames.Add(s);
                     }
@@ -79,15 +91,15 @@ namespace WindowsFormsApplication1
         #region suffix
 
         private static string[] suffix = {
-                                           "mp4",
-                                           "3gp",
-                                           "3g2",
-                                           "asf",
-                                           "avi",
-                                           "vob",
-                                           "flv",
-                                           "mov",
-                                           "mkv"
+                                           ".mp4",
+                                           ".3gp",
+                                           ".3g2",
+                                           ".asf",
+                                           ".avi",
+                                           ".vob",
+                                           ".flv",
+                                           ".mov",
+                                           ".mkv"
                                         };
         #endregion
 
@@ -124,6 +136,11 @@ namespace WindowsFormsApplication1
             foreach (string s in fileNames)
             {
                 Shooter shooter = new Shooter(new FileInfo(s),checkBox1.Checked);
+
+                #region temp solution
+                Thread t = new Thread(shooter.startDownload);
+                t.Start();
+                #endregion
             }
             listBox1.Items[0].ToString();
         }

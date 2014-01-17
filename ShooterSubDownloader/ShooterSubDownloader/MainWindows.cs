@@ -109,6 +109,11 @@ namespace WindowsFormsApplication1
 
         private void button1_Click(object sender, EventArgs e)
         {
+            if (!Shooter.canConnect())
+            {
+                MessageBox.Show("无法连接到射手网，请检查网络连接。");
+                return;
+            }
             foreach (string s in fileNames)
             {
                 Shooter shooter = new Shooter(new FileInfo(s));

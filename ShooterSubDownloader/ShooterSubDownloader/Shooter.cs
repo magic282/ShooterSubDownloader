@@ -140,6 +140,17 @@ namespace WindowsFormsApplication1
                         {
                             client.DownloadFile(new Uri(subinfoChn[i].Files[j].Link),
                                                 dir + Path.DirectorySeparatorChar + subFileName);
+                            if (subinfoChn[i].Delay != 0)
+                            {
+                                string delayFileName = subFileName + ".delay";
+                                FileStream delayFile = new FileStream(
+                                    dir + Path.DirectorySeparatorChar + delayFileName,FileMode.OpenOrCreate);
+                                StreamWriter sw = new StreamWriter(delayFile);
+                                sw.Write(subinfoChn[i].Delay);
+                                sw.Flush();
+                                sw.Close();
+                                delayFile.Close();
+                            }
                             ++count;
                         }
                         catch (Exception e)

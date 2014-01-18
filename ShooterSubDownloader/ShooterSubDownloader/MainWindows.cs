@@ -98,20 +98,17 @@ namespace WindowsFormsApplication1
                                            ".vob",
                                            ".flv",
                                            ".mov",
-                                           ".mkv"
+                                           ".mkv",
+                                           ".rm",
+                                           ".rmvb",
+                                           ".divx",
+                                           ".mpg",
+                                           ".mpeg",
+                                           ".mpe",
+                                           ".wmv"
                                         };
         #endregion
 
-        public class ColorListBoxItem
-        {
-            public Color ItemColor { get; set; }
-            public string Message { get; set; }
-            public ColorListBoxItem(Color c, string m)
-            {
-                ItemColor = c;
-                Message = m;
-            }
-        }
         private void showFileNames()
         {
             listView1.Items.Clear();
@@ -142,18 +139,6 @@ namespace WindowsFormsApplication1
             //listBox1.TopIndex = Math.Max(listBox1.Items.Count - visibleItems + 1, 0);
         }
 
-        private void label1_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void listBox1_SelectedIndexChanged(object sender, EventArgs e)
-        {
-
-        }
-
-
-
         private ManualResetEvent[] doneEvents;
         private void startSingleTask(Object threadContext)
         {
@@ -161,59 +146,57 @@ namespace WindowsFormsApplication1
             shooter.startDownload();
             //MessageBox.Show(shooter.Status.ToString());
             //Console.WriteLine("shooterFileName: {0}", shooter.FileName);
-            for (int i = 0; i < fileNames.Count; ++i)
+
+            Console.WriteLine("Subs for video {0} is finished.", shooter.FileName);
+            Color c;
+            if (shooter.Status == Shooter.returnStatus.DownloadFailed)
             {
-                //Console.WriteLine("fileNames[{0}] is {1}", i, fileNames[i]);
-                if (shooter.FileName == fileNames[i])
-                {
-                    Console.WriteLine("Subs for video {0} is finished.", shooter.FileName);
-                    Color c;
-                    if (shooter.Status == Shooter.returnStatus.DownloadFailed)
-                    {
-                        c = label7.BackColor;
-                    }
-                    else if (shooter.Status == Shooter.returnStatus.NoSubtitle)
-                    {
-                        c = label6.BackColor;
-                    }
-                    else if (shooter.Status == Shooter.returnStatus.Success)
-                    {
-                        c = label5.BackColor;
-                    }
-                    else
-                    {
-                        c = label4.BackColor;
-                    }
-                    if (listView1.InvokeRequired)
-                    {
-                        listView1.Invoke(new MethodInvoker(delegate
-                        {
-                            listView1.Items[i].BackColor = c;
-                        }));
-                    }
-                    
-                    doneEvents[i].Set();
-                }
+                c = label7.BackColor;
             }
+            else if (shooter.Status == Shooter.returnStatus.NoSubtitle)
+            {
+                c = label6.BackColor;
+            }
+            else if (shooter.Status == Shooter.returnStatus.Success)
+            {
+                c = label5.BackColor;
+            }
+            else
+            {
+                c = label4.BackColor;
+            }
+            if (listView1.InvokeRequired)
+            {
+                listView1.Invoke(new MethodInvoker(delegate
+                {
+                    listView1.Items[shooter.TaskIndex].BackColor = c;
+                }));
+            }
+
+            doneEvents[shooter.TaskIndex % taskThreadNum].Set();
+
         }
 
+        private int taskThreadNum = 1;
         private void Run()
         {
             Console.WriteLine("Pushing all download task to ThreadPool...");
-            doneEvents = new ManualResetEvent[fileNames.Count];
-            for (int i = 0; i < doneEvents.Length; ++i)
-                doneEvents[i] = new ManualResetEvent(false);
-            for (int i = 0; i < fileNames.Count; ++i)
+            for (int f = 0; f < fileNames.Count; )
             {
-                Shooter shooter = new Shooter(new FileInfo(fileNames[i]), checkBox1.Checked);
-                ThreadPool.QueueUserWorkItem(startSingleTask, shooter);
-                #region temp solution
-                //Thread t = new Thread(shooter.startDownload);
-                //t.Start();
-                //t.Join();
-                #endregion
+                int todoTaskNum = (fileNames.Count - f > taskThreadNum) ? taskThreadNum : (fileNames.Count - f);
+                doneEvents = new ManualResetEvent[todoTaskNum];
+                for (int i = 0; i < doneEvents.Length; ++i)
+                    doneEvents[i] = new ManualResetEvent(false);
+
+                for (int i = 0; i < todoTaskNum; ++i)
+                {
+                    Shooter shooter = new Shooter(new FileInfo(fileNames[i]), checkBox1.Checked, f + i);
+                    ThreadPool.QueueUserWorkItem(startSingleTask, shooter);
+                }
+                WaitHandle.WaitAll(doneEvents);
+                f += todoTaskNum;
             }
-            WaitHandle.WaitAll(doneEvents);
+
             if (button1.InvokeRequired)
             {
                 button1.Invoke(new MethodInvoker(delegate
@@ -229,6 +212,13 @@ namespace WindowsFormsApplication1
                     button2.Enabled = true;
                 }));
             }
+            if (numericUpDown1.InvokeRequired)
+            {
+                numericUpDown1.Invoke(new MethodInvoker(delegate
+                {
+                    numericUpDown1.Enabled = true;
+                }));
+            }
         }
 
         private void button1_Click(object sender, EventArgs e)
@@ -238,11 +228,21 @@ namespace WindowsFormsApplication1
                 MessageBox.Show("无法连接到射手网，请检查网络连接。");
                 return;
             }
-            Thread t = new Thread(Run);
-            t.Start();
+
+            foreach (ListViewItem l in listView1.Items)
+            {
+                l.BackColor = label4.BackColor;
+            }
+
             button1.Enabled = false;
             button1.Text = "下载中...";
             button2.Enabled = false;
+            numericUpDown1.Enabled = false;
+            this.taskThreadNum = Convert.ToInt32(numericUpDown1.Value);
+
+            Thread t = new Thread(Run);
+            t.Start();
+
             ManualResetEvent finish = new ManualResetEvent(false);
 
         }

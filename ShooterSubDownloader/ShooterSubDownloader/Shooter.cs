@@ -55,6 +55,7 @@ namespace WindowsFormsApplication1
 
         private FileInfo videoFile;
         private bool enableEngSub;
+        private int taskIndex;
         private returnStatus status;
         private string hashValue;
         private Subinfo[] subinfoChn;
@@ -64,10 +65,16 @@ namespace WindowsFormsApplication1
         {
             get { return videoFile.FullName; }
         }
-        public Shooter(FileInfo fileInfo, bool enableEngSub)
+
+        public int TaskIndex
+        {
+            get { return this.taskIndex; }
+        }
+        public Shooter(FileInfo fileInfo, bool enableEngSub, int taskIndex)
         {
             this.videoFile = fileInfo;
             this.enableEngSub = enableEngSub;
+            this.taskIndex = taskIndex;
             this.status = returnStatus.Unknown;
             this.hashValue = SVPlayerHash.ComputeFileHash(fileInfo);
 
@@ -79,8 +86,18 @@ namespace WindowsFormsApplication1
         {
             Console.WriteLine("startDownload called.");
             Console.WriteLine("Working for {0}", Path.GetFileNameWithoutExtension(videoFile.FullName));
-            getSubInfoFromShooter();
+            try
+            {
+                getSubInfoFromShooter();                
+            }
+            catch (Exception e)
+            {
+                status = returnStatus.DownloadFailed;
+                return;
+            }
+
             Down();
+
             Console.WriteLine("startDownload finish.");
         }
 
@@ -144,7 +161,7 @@ namespace WindowsFormsApplication1
                             {
                                 string delayFileName = subFileName + ".delay";
                                 FileStream delayFile = new FileStream(
-                                    dir + Path.DirectorySeparatorChar + delayFileName,FileMode.OpenOrCreate);
+                                    dir + Path.DirectorySeparatorChar + delayFileName, FileMode.OpenOrCreate);
                                 StreamWriter sw = new StreamWriter(delayFile);
                                 sw.Write(subinfoChn[i].Delay);
                                 sw.Flush();

@@ -10,7 +10,7 @@ using System.Text;
 using System.Diagnostics;
 using System.Threading;
 
-namespace WindowsFormsApplication1
+namespace ShooterSubDownloader
 {
 
     /// <summary>
@@ -84,21 +84,36 @@ namespace WindowsFormsApplication1
 
         public void startDownload()
         {
-            Console.WriteLine("startDownload called.");
-            Console.WriteLine("Working for {0}", Path.GetFileNameWithoutExtension(videoFile.FullName));
+            Logger.Log(string.Format("Shooter working for {0}", Path.GetFileNameWithoutExtension(videoFile.FullName)));
             try
             {
-                getSubInfoFromShooter();                
+                getSubInfoFromShooter();
             }
             catch (Exception e)
             {
                 status = returnStatus.DownloadFailed;
+                Logger.Log("Exception when getting sub info");
+                Logger.Log(e.GetType().ToString());
+                Logger.Log(e.Message);
+                Logger.Log(e.StackTrace);
                 return;
             }
 
-            Down();
+            try
+            {
+                Down();
+            }
+            catch (Exception e)
+            {
+                status = returnStatus.DownloadFailed;
+                Logger.Log("Exception when downloading");
+                Logger.Log(e.GetType().ToString());
+                Logger.Log(e.Message);
+                Logger.Log(e.StackTrace);
+                return;
+            }
 
-            Console.WriteLine("startDownload finish.");
+            Logger.Log(string.Format("Shooter finsihed for {0}", Path.GetFileNameWithoutExtension(videoFile.FullName)));
         }
 
         internal returnStatus Status
@@ -110,7 +125,8 @@ namespace WindowsFormsApplication1
         private void Down()
         {
             int count = 0;
-            Console.WriteLine("starting download...");
+            Logger.Log(string.Format("starting download for {0}",
+                Path.GetFileNameWithoutExtension(videoFile.FullName)));
 
             int expectCnt = 0;
             if (subinfoChn != null)
@@ -141,14 +157,16 @@ namespace WindowsFormsApplication1
                 WebClient client = new WebClient();
                 string dir = videoFile.DirectoryName;
                 string subFileNameBase = Path.GetFileNameWithoutExtension(videoFile.FullName);
-                Console.WriteLine("Get {0} subs returned.", subinfoChn.Length);
+                Logger.Log(string.Format("Get {0} subs returned.", subinfoChn.Length));
                 for (int i = 0; i < subinfoChn.Length; ++i)
                 {
-                    Console.WriteLine("Downloading {0} file", i);
+                    Logger.Log(string.Format("Downloading {0} file", i));
                     for (int j = 0; j < subinfoChn[i].Files.Length; ++j)
                     {
                         Console.WriteLine(subinfoChn[i].Files[j].Ext);
+                        Logger.Log(subinfoChn[i].Files[j].Ext);
                         Console.WriteLine(subinfoChn[i].Files[j].Link);
+                        Logger.Log(subinfoChn[i].Files[j].Link);
                         string subFileName = subFileNameBase +
                             ".chn" + (i == 0 ? "" : string.Format("{0}", i)) +
                             "." + subinfoChn[i].Files[j].Ext;
@@ -176,8 +194,13 @@ namespace WindowsFormsApplication1
                             Console.WriteLine(e.GetType().ToString());
                             Console.WriteLine(e.Message);
                             Console.WriteLine(e.StackTrace);
+
+                            Logger.Log("Caught exception while downloading.");
+                            Logger.Log(e.GetType().ToString());
+                            Logger.Log(e.Message);
+                            Logger.Log(e.StackTrace);
                             //status = returnStatus.DownloadFailed;
-                            return;
+                            //return;
                         }
                     }
                 }
@@ -190,14 +213,16 @@ namespace WindowsFormsApplication1
                 WebClient client = new WebClient();
                 string dir = videoFile.DirectoryName;
                 string subFileNameBase = Path.GetFileNameWithoutExtension(videoFile.FullName);
-                Console.WriteLine("Get {0} subs returned.", subinfoEng.Length);
+                Logger.Log(string.Format("Get {0} subs returned.", subinfoEng.Length));
                 for (int i = 0; i < subinfoEng.Length; ++i)
                 {
-                    Console.WriteLine("Downloading {0} file", i);
+                    Logger.Log(string.Format("Downloading {0} file", i));
                     for (int j = 0; j < subinfoEng[i].Files.Length; ++j)
                     {
                         Console.WriteLine(subinfoEng[i].Files[j].Ext);
+                        Logger.Log(subinfoEng[i].Files[j].Ext);
                         Console.WriteLine(subinfoEng[i].Files[j].Link);
+                        Logger.Log(subinfoEng[i].Files[j].Link);
                         string subFileName = subFileNameBase +
                             ".eng" + (i == 0 ? "" : string.Format("{0}", i)) +
                             "." + subinfoEng[i].Files[j].Ext;
@@ -214,8 +239,13 @@ namespace WindowsFormsApplication1
                             Console.WriteLine(e.GetType().ToString());
                             Console.WriteLine(e.Message);
                             Console.WriteLine(e.StackTrace);
+
+                            Logger.Log("Caught exception while downloading.");
+                            Logger.Log(e.GetType().ToString());
+                            Logger.Log(e.Message);
+                            Logger.Log(e.StackTrace);
                             //status = returnStatus.DownloadFailed;
-                            return;
+                            //return;
                         }
                     }
                 }
@@ -232,7 +262,9 @@ namespace WindowsFormsApplication1
             {
                 status = returnStatus.DownloadFailed;
             }
-            Console.WriteLine("download finished.");
+            Logger.Log(string.Format("Download {0} files for {1} in total.", count,
+                Path.GetFileNameWithoutExtension(videoFile.FullName)));
+            Logger.Log("download finished.");
 
         }
 
@@ -245,7 +277,7 @@ namespace WindowsFormsApplication1
         /// <param name="downEngSub"></param>
         private void getSubInfoFromShooter()
         {
-            Console.WriteLine("Start getSubInfoFromShooter...");
+            Logger.Log("Start getSubInfoFromShooter...");
             #region download Chinese subInfo
             using (var wb = new WebClient())
             {
@@ -265,18 +297,22 @@ namespace WindowsFormsApplication1
 
                 string retString = Encoding.UTF8.GetString(response);
                 Console.WriteLine(retString);
+                Logger.Log(retString);
                 subinfoChn = JsonHelper.FromJson<Subinfo[]>(retString);
 
                 #region result debug output
-                foreach (Subinfo sub in subinfoChn)
-                {
-                    Console.WriteLine(sub.Desc);
-                    foreach (Fileinfo file in sub.Files)
-                    {
-                        Console.WriteLine(file.Ext);
-                        Console.WriteLine(file.Link);
-                    }
-                }
+                //foreach (Subinfo sub in subinfoChn)
+                //{
+                //    Console.WriteLine(sub.Desc);
+                //    Logger.Log(sub.Desc);
+                //    foreach (Fileinfo file in sub.Files)
+                //    {
+                //        Console.WriteLine(file.Ext);
+                //        Console.WriteLine(file.Link);
+                //        Logger.Log(file.Ext);
+                //        Logger.Log(file.Link);
+                //    }
+                //}
                 #endregion
             }
             #endregion
@@ -304,6 +340,7 @@ namespace WindowsFormsApplication1
 
                     string retString = Encoding.UTF8.GetString(response);
                     Console.WriteLine(retString);
+                    Logger.Log(retString);
                     subinfoEng = JsonHelper.FromJson<Subinfo[]>(retString);
 
                     #region result debug output
@@ -321,6 +358,7 @@ namespace WindowsFormsApplication1
             }
             #endregion
             Console.WriteLine("getSubInfoFromShooter finished.");
+            Logger.Log("getSubInfoFromShooter finished.");
         }
 
         public static bool canConnect()
@@ -332,7 +370,7 @@ namespace WindowsFormsApplication1
             Ping p = new Ping();
             try
             {
-                PingReply reply = p.Send(host, 6000);
+                PingReply reply = p.Send(host, 3000);
                 if (reply.Status == IPStatus.Success)
                     return true;
             }

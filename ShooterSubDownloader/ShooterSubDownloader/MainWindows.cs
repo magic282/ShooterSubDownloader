@@ -10,7 +10,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-namespace WindowsFormsApplication1
+namespace ShooterSubDownloader
 {
     public partial class MainWindows : Form
     {
@@ -22,6 +22,7 @@ namespace WindowsFormsApplication1
             listView1.DragDrop += new DragEventHandler(listBox1_DragDrop);
 
             fileNames = new List<string>();
+            Logger.clear();
         }
 
         private void MainWindows_Load(object sender, EventArgs e)
@@ -31,7 +32,6 @@ namespace WindowsFormsApplication1
 
         private void listBox1_DragEnter(object sender, DragEventArgs e)
         {
-            Console.WriteLine("in DragEnter");
             if (e.Data.GetDataPresent(DataFormats.FileDrop))
                 e.Effect = DragDropEffects.Link;
             else e.Effect = DragDropEffects.None;
@@ -66,7 +66,6 @@ namespace WindowsFormsApplication1
                             fileNames.Add(item);
                         }
                     }
-
                 }
                 else
                 {
@@ -76,7 +75,6 @@ namespace WindowsFormsApplication1
                     }
 
                 }
-
             }
         }
         private void listBox1_DragDrop(object sender, DragEventArgs e)
@@ -115,22 +113,12 @@ namespace WindowsFormsApplication1
             ColumnHeader header = new ColumnHeader();
             header.Text = "文件名";
             header.Name = "col1";
-            //header.AutoResize(ColumnHeaderAutoResizeStyle.ColumnContent);
             header.Width = 700;
             listView1.Columns.Add(header);
             foreach (string s in fileNames)
             {
                 ListViewItem lvi = new ListViewItem(Path.GetFileName(s));
                 lvi.BackColor = Color.White;
-                //lvi.SubItems.Add(Path.GetFileName(s));
-
-                //ListViewItem.ListViewSubItem llvi = new ListViewItem.ListViewSubItem();
-                //llvi.Text = Path.GetFileName(s);
-                //llvi.BackColor = Color.Red;
-                //llvi.ForeColor = Color.Blue;
-                //lvi.SubItems.Add(llvi);
-                //lvi.Text = Path.GetFileName(s);
-                //lvi.UseItemStyleForSubItems = false;
                 listView1.Items.Add(lvi);
             }
 
@@ -144,10 +132,9 @@ namespace WindowsFormsApplication1
         {
             Shooter shooter = (Shooter)threadContext;
             shooter.startDownload();
-            //MessageBox.Show(shooter.Status.ToString());
-            //Console.WriteLine("shooterFileName: {0}", shooter.FileName);
 
-            Console.WriteLine("Subs for video {0} is finished.", shooter.FileName);
+            Logger.Log(string.Format("Subs for video {0} is finished.", shooter.FileName));
+            Logger.Log(string.Format("returnStatus is {0}", shooter.Status.ToString()));
             Color c;
             if (shooter.Status == Shooter.returnStatus.DownloadFailed)
             {
@@ -180,7 +167,8 @@ namespace WindowsFormsApplication1
         private int taskThreadNum = 1;
         private void Run()
         {
-            Console.WriteLine("Pushing all download task to ThreadPool...");
+            Logger.Log("Start Running...");
+            Logger.Log(string.Format("taskThreadNum is {0}", taskThreadNum));
             for (int f = 0; f < fileNames.Count; )
             {
                 int todoTaskNum = (fileNames.Count - f > taskThreadNum) ? taskThreadNum : (fileNames.Count - f);
@@ -190,7 +178,7 @@ namespace WindowsFormsApplication1
 
                 for (int i = 0; i < todoTaskNum; ++i)
                 {
-                    Shooter shooter = new Shooter(new FileInfo(fileNames[i]), checkBox1.Checked, f + i);
+                    Shooter shooter = new Shooter(new FileInfo(fileNames[f + i]), checkBox1.Checked, f + i);
                     ThreadPool.QueueUserWorkItem(startSingleTask, shooter);
                 }
                 WaitHandle.WaitAll(doneEvents);
@@ -219,12 +207,14 @@ namespace WindowsFormsApplication1
                     numericUpDown1.Enabled = true;
                 }));
             }
+            Logger.Log("Run finished.");
         }
 
         private void button1_Click(object sender, EventArgs e)
         {
             if (!Shooter.canConnect())
             {
+                Logger.Log("Cannot connect to shooter.cn");
                 MessageBox.Show("无法连接到射手网，请检查网络连接。");
                 return;
             }
@@ -244,7 +234,6 @@ namespace WindowsFormsApplication1
             t.Start();
 
             ManualResetEvent finish = new ManualResetEvent(false);
-
         }
 
         private void button2_Click(object sender, EventArgs e)
@@ -252,47 +241,6 @@ namespace WindowsFormsApplication1
             listView1.Items.Clear();
             fileNames = new List<string>();
         }
-
-        #region A not elegant way to use personal backgroud for items in listbox
-        //private void listBox1_DrawItem(object sender, DrawItemEventArgs e)
-        //{
-        //    Console.WriteLine("debug point 1");
-        //    if (listBox1.Items.Count <= 0)
-        //    {
-        //        Console.WriteLine("debug point 2");
-        //        return;
-        //    }
-        //    ColorListBoxItem item = listBox1.Items[e.Index] as ColorListBoxItem; // Get the current item and cast it to MyListBoxItem
-
-        //    Console.WriteLine("debug point 3");
-        //    if (item != null)
-        //    {
-
-        //        e.DrawBackground();
-        //        Graphics g = e.Graphics;
-
-        //        g.FillRectangle(new SolidBrush(item.ItemColor), e.Bounds);
-
-        //        // Print text
-
-        //        e.DrawFocusRectangle();
-
-        //        e.Graphics.DrawString( // Draw the appropriate text in the ListBox
-        //            item.Message, // The message linked to the item
-        //            listBox1.Font, // Take the font from the listbox
-        //            new SolidBrush(Color.Black), // Set the color 
-        //            e.Bounds, // X pixel coordinate
-        //            StringFormat.GenericDefault // Y pixel coordinate.  Multiply the index by the ItemHeight defined in the listbox.
-        //        );
-        //    }
-        //    else
-        //    {
-        //        // The item isn't a MyListBoxItem, do something about it
-        //        Console.WriteLine("debug point 5");
-        //    }
-        //    Console.WriteLine("debug point 4");
-        //} 
-        #endregion
 
     }
 }

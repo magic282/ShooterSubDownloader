@@ -55,6 +55,7 @@ namespace ShooterSubDownloader
 
         private FileInfo videoFile;
         private bool enableEngSub;
+        private bool enbaleOnlyOneSub;
         private int taskIndex;
         private returnStatus status;
         private string hashValue;
@@ -70,10 +71,11 @@ namespace ShooterSubDownloader
         {
             get { return this.taskIndex; }
         }
-        public Shooter(FileInfo fileInfo, bool enableEngSub, int taskIndex)
+        public Shooter(FileInfo fileInfo, bool enableEngSub, bool enableOnlyOneSub, int taskIndex)
         {
             this.videoFile = fileInfo;
             this.enableEngSub = enableEngSub;
+            this.enbaleOnlyOneSub = enableOnlyOneSub;
             this.taskIndex = taskIndex;
             this.status = returnStatus.Unknown;
             this.hashValue = SVPlayerHash.ComputeFileHash(fileInfo);
@@ -101,7 +103,15 @@ namespace ShooterSubDownloader
 
             try
             {
-                Down();
+                if (enbaleOnlyOneSub)
+                {
+                    DownFirstSub();
+                }
+                else
+                {
+                    Down();
+                }
+
             }
             catch (Exception e)
             {
@@ -253,6 +263,102 @@ namespace ShooterSubDownloader
             #endregion
 
 
+
+            if (count > 0)
+            {
+                status = returnStatus.Success;
+            }
+            else
+            {
+                status = returnStatus.DownloadFailed;
+            }
+            Logger.Log(string.Format("Download {0} files for {1} in total.", count,
+                Path.GetFileNameWithoutExtension(videoFile.FullName)));
+            Logger.Log("download finished.");
+
+        }
+
+        private void DownFirstSub()
+        {
+            int count = 0;
+            Logger.Log(string.Format("starting download for {0}",
+                Path.GetFileNameWithoutExtension(videoFile.FullName)));
+
+            int expectCnt = 0;
+            if (subinfoChn != null)
+            {
+                foreach (Subinfo sub in subinfoChn)
+                {
+                    expectCnt += sub.Files.Length;
+                }
+            }
+            if (enableEngSub && subinfoEng != null)
+            {
+                foreach (Subinfo sub in subinfoEng)
+                {
+                    expectCnt += sub.Files.Length;
+                }
+            }
+
+            if (expectCnt <= 0)
+            {
+                status = returnStatus.NoSubtitle;
+                return;
+            }
+
+            #region Download Chinese subtitles
+            if (subinfoChn != null)
+            {
+
+                WebClient client = new WebClient();
+                string dir = videoFile.DirectoryName;
+                string subFileNameBase = Path.GetFileNameWithoutExtension(videoFile.FullName);
+                Logger.Log(string.Format("Get {0} subs returned.", subinfoChn.Length));
+
+                Logger.Log(string.Format("Downloading {0} file", 0));
+
+                Console.WriteLine(subinfoChn[0].Files[0].Ext);
+                Logger.Log(subinfoChn[0].Files[0].Ext);
+                Console.WriteLine(subinfoChn[0].Files[0].Link);
+                Logger.Log(subinfoChn[0].Files[0].Link);
+                string subFileName = subFileNameBase +
+                    "." + subinfoChn[0].Files[0].Ext;
+
+                try
+                {
+                    client.DownloadFile(new Uri(subinfoChn[0].Files[0].Link),
+                                        dir + Path.DirectorySeparatorChar + subFileName);
+                    if (subinfoChn[0].Delay != 0)
+                    {
+                        string delayFileName = subFileName + ".delay";
+                        FileStream delayFile = new FileStream(
+                            dir + Path.DirectorySeparatorChar + delayFileName, FileMode.OpenOrCreate);
+                        StreamWriter sw = new StreamWriter(delayFile);
+                        sw.Write(subinfoChn[0].Delay);
+                        sw.Flush();
+                        sw.Close();
+                        delayFile.Close();
+                    }
+                    ++count;
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine("Caught exception while downloading.");
+                    Console.WriteLine(e.GetType().ToString());
+                    Console.WriteLine(e.Message);
+                    Console.WriteLine(e.StackTrace);
+
+                    Logger.Log("Caught exception while downloading.");
+                    Logger.Log(e.GetType().ToString());
+                    Logger.Log(e.Message);
+                    Logger.Log(e.StackTrace);
+                    //status = returnStatus.DownloadFailed;
+                    //return;
+                }
+
+
+            }
+            #endregion
 
             if (count > 0)
             {

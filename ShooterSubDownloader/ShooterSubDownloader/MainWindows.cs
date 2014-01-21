@@ -178,7 +178,9 @@ namespace ShooterSubDownloader
 
                 for (int i = 0; i < todoTaskNum; ++i)
                 {
-                    Shooter shooter = new Shooter(new FileInfo(fileNames[f + i]), checkBox1.Checked, f + i);
+                    Shooter shooter = new Shooter(new FileInfo(fileNames[f + i]),
+                        checkBox1.Checked, checkBox2.Checked,
+                        f + i);
                     ThreadPool.QueueUserWorkItem(startSingleTask, shooter);
                 }
                 WaitHandle.WaitAll(doneEvents);
@@ -207,6 +209,20 @@ namespace ShooterSubDownloader
                     numericUpDown1.Enabled = true;
                 }));
             }
+            if (checkBox1.InvokeRequired)
+            {
+                checkBox1.Invoke(new MethodInvoker(delegate
+                {
+                    checkBox1.Enabled = true;
+                }));
+            }
+            if (checkBox2.InvokeRequired)
+            {
+                checkBox2.Invoke(new MethodInvoker(delegate
+                {
+                    checkBox2.Enabled = true;
+                }));
+            }
             Logger.Log("Run finished.");
         }
 
@@ -227,6 +243,8 @@ namespace ShooterSubDownloader
             button1.Enabled = false;
             button1.Text = "下载中...";
             button2.Enabled = false;
+            checkBox1.Enabled = false;
+            checkBox2.Enabled = false;
             numericUpDown1.Enabled = false;
             this.taskThreadNum = Convert.ToInt32(numericUpDown1.Value);
 

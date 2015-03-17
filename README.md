@@ -4,6 +4,8 @@ ShooterSubDownloader
 射手网字幕下载器
 ================
 
+[点此下载](https://github.com/magic282/ShooterSubDownloader/releases)
+
 This is a shooter.cn subtitle downloading tool implemented with C#.
 
 // TODO

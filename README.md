@@ -1,6 +1,10 @@
 ShooterSubDownloader
 ====================
-This is a shooter.cn subtitle download tool using C#.
+
+射手网字幕下载器
+================
+
+This is a shooter.cn subtitle downloading tool implemented with C#.
 
 // TODO
 

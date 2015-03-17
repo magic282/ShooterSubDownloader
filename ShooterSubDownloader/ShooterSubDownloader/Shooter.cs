@@ -315,7 +315,7 @@ namespace ShooterSubDownloader
                 string subFileNameBase = Path.GetFileNameWithoutExtension(videoFile.FullName);
                 Logger.Log(string.Format("Get {0} subs returned.", subinfoChn.Length));
 
-                Logger.Log(string.Format("Downloading {0} file", 0));
+                Logger.Log(string.Format("Downloading {0} file", 1));
 
                 Console.WriteLine(subinfoChn[0].Files[0].Ext);
                 Logger.Log(subinfoChn[0].Files[0].Ext);
@@ -356,6 +356,47 @@ namespace ShooterSubDownloader
                     //return;
                 }
 
+
+            }
+            #endregion
+
+            #region Download English subtitles
+            if (enableEngSub && subinfoEng != null)
+            {
+                WebClient client = new WebClient();
+                string dir = videoFile.DirectoryName;
+                string subFileNameBase = Path.GetFileNameWithoutExtension(videoFile.FullName);
+                Logger.Log(string.Format("Get {0} subs returned.", subinfoEng.Length));
+
+                Logger.Log(string.Format("Downloading {0} file", 1));
+
+                Console.WriteLine(subinfoEng[0].Files[0].Ext);
+                Logger.Log(subinfoEng[0].Files[0].Ext);
+                Console.WriteLine(subinfoEng[0].Files[0].Link);
+                Logger.Log(subinfoEng[0].Files[0].Link);
+                string subFileName = subFileNameBase +
+                    ".eng" + "." + subinfoEng[0].Files[0].Ext;
+
+                try
+                {
+                    client.DownloadFile(new Uri(subinfoEng[0].Files[0].Link),
+                                      dir + Path.DirectorySeparatorChar + subFileName);
+                    ++count;
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine("Caught exception while downloading.");
+                    Console.WriteLine(e.GetType().ToString());
+                    Console.WriteLine(e.Message);
+                    Console.WriteLine(e.StackTrace);
+
+                    Logger.Log("Caught exception while downloading.");
+                    Logger.Log(e.GetType().ToString());
+                    Logger.Log(e.Message);
+                    Logger.Log(e.StackTrace);
+                    //status = returnStatus.DownloadFailed;
+                    //return;
+                }
 
             }
             #endregion

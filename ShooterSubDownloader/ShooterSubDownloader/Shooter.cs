@@ -148,7 +148,7 @@ namespace ShooterSubDownloader
                 Console.WriteLine(sub.Files[j].Link);
                 Logger.Log(sub.Files[j].Link);
                 string subFileName = subFileNameBase +
-                    ".chn" + (subIndex == 0 ? "" : string.Format("{0}", subIndex)) +
+                    "." + lan.ToString().ToLower() + (subIndex == 0 ? "" : string.Format("{0}", subIndex)) +
                     "." + sub.Files[j].Ext;
 
                 try

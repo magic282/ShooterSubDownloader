@@ -56,7 +56,8 @@ namespace ShooterSubDownloader
             foreach (string s in FNs)
             {
                 FileInfo f = new FileInfo(s);
-                if (f.Attributes == FileAttributes.Directory)
+                if (Directory.Exists(s))
+                //if (f.Attributes == FileAttributes.Directory)
                 {
                     foreach (string item in Directory.GetFiles(s))
                     {

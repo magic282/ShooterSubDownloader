@@ -136,15 +136,15 @@ namespace ShooterSubDownloader
             Logger.Log(string.Format("Subs for video {0} is finished.", shooter.FileName));
             Logger.Log(string.Format("returnStatus is {0}", shooter.Status.ToString()));
             Color c;
-            if (shooter.Status == Shooter.returnStatus.DownloadFailed)
+            if (shooter.Status == Shooter.ReturnStatus.DownloadFailed)
             {
                 c = label7.BackColor;
             }
-            else if (shooter.Status == Shooter.returnStatus.NoSubtitle)
+            else if (shooter.Status == Shooter.ReturnStatus.NoSubtitle)
             {
                 c = label6.BackColor;
             }
-            else if (shooter.Status == Shooter.returnStatus.Success)
+            else if (shooter.Status == Shooter.ReturnStatus.Success)
             {
                 c = label5.BackColor;
             }

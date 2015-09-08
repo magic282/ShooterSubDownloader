@@ -18,6 +18,7 @@ namespace ShooterSubDownloader
     /// </summary>
     class Shooter
     {
+        #region Json DataContracts
         [DataContract]
         class SubFileInfo
         {
@@ -37,15 +38,16 @@ namespace ShooterSubDownloader
             [DataMember]
             public SubFileInfo[] Files { get; set; }
         }
+        #endregion
 
         private const string url = "http://shooter.cn/api/subapi.php";
         internal enum SubLanguage
         {
-            Chn,
+            Chn, // The C must be capitalized
             eng,
         };
 
-        internal enum returnStatus
+        internal enum ReturnStatus
         {
             Success,
             NoSubtitle,
@@ -57,7 +59,7 @@ namespace ShooterSubDownloader
         private bool enableEngSub;
         private bool enbaleOnlyOneSub;
         private int taskIndex;
-        private returnStatus status;
+        private ReturnStatus status;
         private string hashValue;
         private Subinfo[] subInfoChn;
         private Subinfo[] subInfoEng;
@@ -73,13 +75,14 @@ namespace ShooterSubDownloader
         {
             get { return this.taskIndex; }
         }
+
         public Shooter(FileInfo fileInfo, bool enableEngSub, bool enableOnlyOneSub, int taskIndex)
         {
             this.videoFile = fileInfo;
             this.enableEngSub = enableEngSub;
             this.enbaleOnlyOneSub = enableOnlyOneSub;
             this.taskIndex = taskIndex;
-            this.status = returnStatus.Unknown;
+            this.status = ReturnStatus.Unknown;
             this.hashValue = SVPlayerHash.ComputeFileHash(fileInfo);
 
             //Thread t = new Thread(action);
@@ -91,11 +94,11 @@ namespace ShooterSubDownloader
             Logger.Log(string.Format("Shooter working for {0}", Path.GetFileNameWithoutExtension(videoFile.FullName)));
             try
             {
-                getSubInfoFromShooter();
+                getSubInfoFromShooterEntry();
             }
             catch (Exception e)
             {
-                status = returnStatus.DownloadFailed;
+                status = ReturnStatus.DownloadFailed;
                 Logger.Log("Exception when getting sub info");
                 Logger.Log(e.GetType().ToString());
                 Logger.Log(e.Message);
@@ -117,7 +120,7 @@ namespace ShooterSubDownloader
             }
             catch (Exception e)
             {
-                status = returnStatus.DownloadFailed;
+                status = ReturnStatus.DownloadFailed;
                 Logger.Log("Exception when downloading");
                 Logger.Log(e.GetType().ToString());
                 Logger.Log(e.Message);
@@ -128,7 +131,7 @@ namespace ShooterSubDownloader
             Logger.Log(string.Format("Shooter finsihed for {0}", Path.GetFileNameWithoutExtension(videoFile.FullName)));
         }
 
-        internal returnStatus Status
+        internal ReturnStatus Status
         {
             get { return status; }
             set { status = value; }
@@ -214,7 +217,7 @@ namespace ShooterSubDownloader
 
             if (expectCnt <= 0)
             {
-                status = returnStatus.NoSubtitle;
+                status = ReturnStatus.NoSubtitle;
                 return;
             }
 
@@ -282,11 +285,11 @@ namespace ShooterSubDownloader
 
             if (actualDownloadCount > 0)
             {
-                status = returnStatus.Success;
+                status = ReturnStatus.Success;
             }
             else
             {
-                status = returnStatus.DownloadFailed;
+                status = ReturnStatus.DownloadFailed;
             }
 
             Logger.Log(string.Format("Download {0} files for {1} in total.", actualDownloadCount,
@@ -304,7 +307,7 @@ namespace ShooterSubDownloader
 
             if (expectCnt <= 0)
             {
-                status = returnStatus.NoSubtitle;
+                status = ReturnStatus.NoSubtitle;
                 return;
             }
 
@@ -405,11 +408,11 @@ namespace ShooterSubDownloader
 
             if (count > 0)
             {
-                status = returnStatus.Success;
+                status = ReturnStatus.Success;
             }
             else
             {
-                status = returnStatus.DownloadFailed;
+                status = ReturnStatus.DownloadFailed;
             }
             Logger.Log(string.Format("Download {0} files for {1} in total.", count,
                 Path.GetFileNameWithoutExtension(videoFile.FullName)));
@@ -417,25 +420,15 @@ namespace ShooterSubDownloader
 
         }
 
-
-        /// <summary>
-        /// waiting for refactoring
-        /// </summary>
-        /// <param name="hashValue"></param>
-        /// <param name="fileInfo"></param>
-        /// <param name="downEngSub"></param>
-        private void getSubInfoFromShooter()
+        private void getSubInfoFromShooterEntry(SubLanguage lan)
         {
-            Logger.Log("Start getSubInfoFromShooter...");
-
-            #region download Chinese subInfo
             using (WebClient wb = new WebClient())
             {
                 var data = new NameValueCollection();
                 data["filehash"] = hashValue;
                 data["pathinfo"] = videoFile.FullName;
                 data["format"] = "json";
-                data["lang"] = SubLanguage.Chn.ToString();
+                data["lang"] = lan.ToString();
 
                 var response = wb.UploadValues(url, "POST", data);
                 string retString = Encoding.UTF8.GetString(response);
@@ -444,42 +437,30 @@ namespace ShooterSubDownloader
 
                 if (!(response.Length == 1 && response[0] == 0xff))
                 {
-                    subInfoChn = JsonHelper.FromJson<Subinfo[]>(retString);
+                    if (lan == SubLanguage.Chn)
+                        subInfoChn = JsonHelper.FromJson<Subinfo[]>(retString);
+                    else if (lan == SubLanguage.eng)
+                        subInfoEng = JsonHelper.FromJson<Subinfo[]>(retString);
                 }
                 else
                 {
-                    subInfoChn = null;
+                    if (lan == SubLanguage.Chn)
+                        subInfoChn = null;
+                    else if (lan == SubLanguage.eng)
+                        subInfoEng = null;
                 }
             }
-            #endregion
+        }
 
-            #region download English sub
+        private void getSubInfoFromShooterEntry()
+        {
+            Logger.Log("Start getSubInfoFromShooter...");
+
+            getSubInfoFromShooterEntry(SubLanguage.Chn);
             if (enableEngSub)
             {
-                using (var wb = new WebClient())
-                {
-                    var data = new NameValueCollection();
-                    data["filehash"] = hashValue;
-                    data["pathinfo"] = videoFile.FullName;
-                    data["format"] = "json";
-                    data["lang"] = SubLanguage.eng.ToString();
-
-                    var response = wb.UploadValues(url, "POST", data);
-                    string retString = Encoding.UTF8.GetString(response);
-                    Console.WriteLine(retString);
-                    Logger.Log(retString);
-
-                    if (!(response.Length == 1 && response[0] == 0xff))
-                    {
-                        subInfoEng = JsonHelper.FromJson<Subinfo[]>(retString);
-                    }
-                    else
-                    {
-                        subInfoEng = null;
-                    }
-                }
+                getSubInfoFromShooterEntry(SubLanguage.eng);
             }
-            #endregion
 
             Console.WriteLine("getSubInfoFromShooter finished.");
             Logger.Log("getSubInfoFromShooter finished.");
